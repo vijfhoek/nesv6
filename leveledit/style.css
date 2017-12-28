@@ -1,0 +1,161 @@
+body, html {
+    padding: 0;
+    margin: 0;
+}
+
+header {
+    box-sizing: border-box;
+    color: #fff;
+
+    padding: 16px;
+    padding-left: 48px;
+
+    font-size: 24px;
+
+    height: 64px;
+    background: rgb(68,40,188);
+
+    box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.20);
+}
+
+.app {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+}
+
+.app .column {
+    padding: 0 24px;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+.palette {
+    position: relative;
+}
+
+.palette .palette__color {
+    width: 30px;
+    height: 32px;
+
+    text-align: center;
+    line-height: 32px;
+
+    display: inline-block;
+}
+
+.palette .palette__color:not([data-selected]) {
+    cursor: pointer;
+}
+.palette .palette__color[data-selected] {
+    border-top: 2px #c07 solid;
+    border-bottom: 2px #c07 solid;
+}
+.palette .palette__color[data-selected]:nth-child(4n-3) {
+    border-left: 2px #c07 solid;
+}
+.palette .palette__color[data-selected]:nth-child(4n) {
+    border-right: 2px #c07 solid;
+}
+
+.color-picker {
+    background-color: white;
+
+    position: absolute;
+    top: 32px;
+    left: 32px;
+
+    padding: 0;
+
+    width: 512px;
+    height: 128px;
+
+    z-index: 1;
+
+    box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.20);
+    display: none;
+}
+
+.color-picker > div {
+    width: 32px;
+    height: 32px;
+
+    display: inline-block;
+    text-align: center;
+    line-height: 32px;
+
+    cursor: pointer;
+}
+.color-picker > div[data-selected] {
+    box-shadow: inset 1px 1px 1px rgba(255, 0, 0, 1.0), inset -1px -1px 1px rgba(255, 0, 0, 1.0);
+}
+.color-picker > div:hover {
+    box-shadow: inset 1px 1px 1px rgba(255, 255, 255, 1.0), inset -1px -1px 1px rgba(255, 255, 255, 1.0);
+}
+
+[data-color='0']  { background-color: rgb(124, 124, 124); color: #fff }
+[data-color='1']  { background-color: rgb(  0,   0, 252); color: #fff }
+[data-color='2']  { background-color: rgb(  0,   0, 188); color: #fff }
+[data-color='3']  { background-color: rgb( 68,  40, 188); color: #fff }
+[data-color='4']  { background-color: rgb(148,   0, 132); color: #fff }
+[data-color='5']  { background-color: rgb(168,   0,  32); color: #fff }
+[data-color='6']  { background-color: rgb(168,  16,   0); color: #fff }
+[data-color='7']  { background-color: rgb(136,  20,   0); color: #fff }
+[data-color='8']  { background-color: rgb( 80,  48,   0); color: #fff }
+[data-color='9']  { background-color: rgb(  0, 120,   0); color: #fff }
+[data-color='10'] { background-color: rgb(  0, 104,   0); color: #fff }
+[data-color='11'] { background-color: rgb(  0,  88,   0); color: #fff }
+[data-color='12'] { background-color: rgb(  0,  64,  88); color: #fff }
+[data-color='13'] { background-color: rgb(  0,   0,   0); color: #fff }
+[data-color='14'] { background-color: rgb(  0,   0,   0); color: #fff }
+[data-color='15'] { background-color: rgb(  0,   0,   0); color: #fff }
+[data-color='16'] { background-color: rgb(188, 188, 188); color: #000 }
+[data-color='17'] { background-color: rgb(  0, 120, 248); color: #fff }
+[data-color='18'] { background-color: rgb(  0,  88, 248); color: #fff }
+[data-color='19'] { background-color: rgb(104,  68, 252); color: #fff }
+[data-color='20'] { background-color: rgb(216,   0, 204); color: #fff }
+[data-color='21'] { background-color: rgb(228,   0,  88); color: #fff }
+[data-color='22'] { background-color: rgb(248,  56,   0); color: #fff }
+[data-color='23'] { background-color: rgb(228,  92,  16); color: #fff }
+[data-color='24'] { background-color: rgb(172, 124,   0); color: #fff }
+[data-color='25'] { background-color: rgb(  0, 184,   0); color: #fff }
+[data-color='26'] { background-color: rgb(  0, 168,   0); color: #fff }
+[data-color='27'] { background-color: rgb(  0, 168,  68); color: #fff }
+[data-color='28'] { background-color: rgb(  0, 136, 136); color: #fff }
+[data-color='29'] { background-color: rgb(  0,   0,   0); color: #fff }
+[data-color='30'] { background-color: rgb(  0,   0,   0); color: #fff }
+[data-color='31'] { background-color: rgb(  0,   0,   0); color: #fff }
+[data-color='32'] { background-color: rgb(248, 248, 248); color: #000 }
+[data-color='33'] { background-color: rgb( 60, 188, 252); color: #fff }
+[data-color='34'] { background-color: rgb(104, 136, 252); color: #fff }
+[data-color='35'] { background-color: rgb(152, 120, 248); color: #fff }
+[data-color='36'] { background-color: rgb(248, 120, 248); color: #fff }
+[data-color='37'] { background-color: rgb(248,  88, 152); color: #fff }
+[data-color='38'] { background-color: rgb(248, 120,  88); color: #fff }
+[data-color='39'] { background-color: rgb(252, 160,  68); color: #000 }
+[data-color='40'] { background-color: rgb(248, 184,   0); color: #000 }
+[data-color='41'] { background-color: rgb(184, 248,  24); color: #000 }
+[data-color='42'] { background-color: rgb( 88, 216,  84); color: #fff }
+[data-color='43'] { background-color: rgb( 88, 248, 152); color: #fff }
+[data-color='44'] { background-color: rgb(  0, 232, 216); color: #fff }
+[data-color='45'] { background-color: rgb(120, 120, 120); color: #fff }
+[data-color='46'] { background-color: rgb(  0,   0,   0); color: #fff }
+[data-color='47'] { background-color: rgb(  0,   0,   0); color: #fff }
+[data-color='48'] { background-color: rgb(252, 252, 252); color: #000 }
+[data-color='49'] { background-color: rgb(164, 228, 252); color: #000 }
+[data-color='50'] { background-color: rgb(184, 184, 248); color: #000 }
+[data-color='51'] { background-color: rgb(216, 184, 248); color: #000 }
+[data-color='52'] { background-color: rgb(248, 184, 248); color: #000 }
+[data-color='53'] { background-color: rgb(248, 164, 192); color: #000 }
+[data-color='54'] { background-color: rgb(240, 208, 176); color: #000 }
+[data-color='55'] { background-color: rgb(252, 224, 168); color: #000 }
+[data-color='56'] { background-color: rgb(248, 216, 120); color: #000 }
+[data-color='57'] { background-color: rgb(216, 248, 120); color: #000 }
+[data-color='58'] { background-color: rgb(184, 248, 184); color: #000 }
+[data-color='59'] { background-color: rgb(184, 248, 216); color: #000 }
+[data-color='60'] { background-color: rgb(  0, 252, 252); color: #fff }
+[data-color='61'] { background-color: rgb(248, 216, 248); color: #000 }
+[data-color='62'] { background-color: rgb(  0,   0,   0); color: #fff }
+[data-color='63'] { background-color: rgb(  0,   0,   0); color: #fff }

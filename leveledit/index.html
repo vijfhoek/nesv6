@@ -1,0 +1,55 @@
+<!doctype html>
+
+<html>
+    <head>
+        <title>NES level editor</title>
+        <link rel="stylesheet" type="text/css" href="style.css">
+    </head>
+
+    <body>
+        <header>NES level editor</header>
+
+        <div class="app">
+            <div class="column column--pattern-table">
+                <h2>Pattern table</h2>
+                <canvas class="sprite-canvas" width="512" height="512"></canvas><br>
+                <input type="file" class="chr-file" v-on:change="onChrUpload"><br>
+
+                <h2>Palette</h2>
+                <div class="palette">
+                    <div v-for="(color, i) in palettes" :data-color="color"
+                         :data-selected="selectedColor == i >> 2 ? '' : null"
+                         v-on:click="selectColor(i >> 2)"
+                         v-on:contextmenu="showColorPicker($event, color, i)"
+                         class="palette__color">
+                        {{ (color < 16 ? '0' : '') + color.toString(16).toUpperCase() }}
+                    </div>
+                    <span v-if="palettes.length < 16"
+                          v-on:click="palettes = palettes.concat([0, 0, 0, 0])">+</span>
+
+                    <div class="color-picker">
+                        <div v-for="color in 64" :data-color="color - 1"
+                             v-on:click="onColorPicked(color - 1)">
+                            {{ (color <= 16 ? '0' : '') + (color - 1).toString(16).toUpperCase() }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="column column--name-table">
+                <h2>Nametable</h2>
+
+                <canvas class="screen-canvas" width="512" height="480"></canvas><br><br>
+
+                <textarea cols="80" rows="15" class="output" v-model="cArray"></textarea><br>
+
+                <input type="button" value="Serialize" v-on:click="serialize">
+                <input type="button" value="Deserialize" v-on:click="deserialize">
+                <input type="button" value="Clear" v-on:click="clearLevel"><br>
+            </div>
+        </div>
+
+        <script src="bundle.js"></script>
+    </body>
+</html>
+
