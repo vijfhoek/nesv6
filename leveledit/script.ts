@@ -18,6 +18,7 @@ class AppData {
     mouseDown: boolean;
 
     cArray: string;
+    size: number;
 }
 
 var data: AppData = {
@@ -35,6 +36,7 @@ var data: AppData = {
     mouseDown: false,
 
     cArray: "",
+    size: 0
 }
 
 const vue = new Vue({
@@ -130,6 +132,7 @@ function onColorPicked(selection: number) {
 
     this.drawSpriteSheet();
     this.drawScreen();
+    this.serialize();
 }
 
 function getMousePos(canvas: HTMLCanvasElement, ev: MouseEvent, div: number): { x: number, y: number } {
@@ -200,8 +203,10 @@ function initScreenCanvas() {
 
         this.hoverPos = getMousePos(canvas, ev, 8 * 2);
 
-        if (this.mouseDown && this.selectedSprite >= 0)
+        if (this.mouseDown && this.selectedSprite >= 0) {
             this.level[this.hoverPos.y][this.hoverPos.x] = this.selectedSprite;
+            this.serialize();
+        }
 
         this.drawScreen();
 
@@ -212,8 +217,10 @@ function initScreenCanvas() {
     canvas.addEventListener('click', (ev: MouseEvent) => {
         const pos = getMousePos(canvas, ev, 8 * 2);
 
-        if (this.selectedSprite >= 0)
+        if (this.selectedSprite >= 0) {
             this.level[pos.y][pos.x] = this.selectedSprite;
+            this.serialize();
+        }
         this.drawScreen();
     })
 }
@@ -255,12 +262,13 @@ function serialize() {
     let result = this.palettes.concat(0xFF);
 
     // Compress the level data
+    let compressed: number[] = []
     for (let tile of flat) {
         if (current == tile && count < 256)
             count++;
         else if (count > 0) {
-            result.push(count - 1);
-            result.push(current);
+            compressed.push(count % 256);
+            compressed.push(current);
 
             count = 1;
             current = tile;
@@ -268,13 +276,22 @@ function serialize() {
     }
 
     if (count > 0) {
-        result.push(count - 1);
-        result.push(current);
+        compressed.push(count % 256);
+        compressed.push(current);
     }
+
+    // Join everything together
+    while (compressed.length) {
+        let slice = compressed.splice(0, 254);
+        console.log(slice.length)
+        result = result.concat(slice.length, slice);
+    }
+    result.push(0);
 
     // Convert the array to C syntax
     //this.cArray = new Uint8Array(result);
     this.cArray = '';
+    this.size = result.length;
     while (result.length)
         this.cArray += result.splice(0, 15).join(', ') + ',\n'
 }
@@ -297,7 +314,7 @@ function deserialize() {
     // Decompress the level and attribute data
     let flat: number[] = [];
     for (i += 1; i < numbers.length; i += 2) {
-        for (let j = 0; j <= numbers[i]; j++) {
+        for (let j = 0; j < (numbers[i] == 0 ? 256 : numbers[i]); j++) {
             let val = numbers[i + 1];
             flat.push(val);
         }

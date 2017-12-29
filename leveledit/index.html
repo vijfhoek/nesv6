@@ -2,6 +2,7 @@
 
 <html>
     <head>
+        <meta charset="UTF-8"> 
         <title>NES level editor</title>
         <link rel="stylesheet" type="text/css" href="style.css">
     </head>
@@ -45,7 +46,8 @@
 
                 <input type="button" value="Serialize" v-on:click="serialize">
                 <input type="button" value="Deserialize" v-on:click="deserialize">
-                <input type="button" value="Clear" v-on:click="clearLevel"><br>
+                <input type="button" value="Clear" v-on:click="clearLevel">
+                Size: {{ size }} bytes<br>
             </div>
         </div>
 
