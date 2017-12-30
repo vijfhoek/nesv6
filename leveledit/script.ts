@@ -222,7 +222,45 @@ function initScreenCanvas() {
             this.serialize();
         }
         this.drawScreen();
-    })
+    });
+
+    canvas.addEventListener('contextmenu', (ev: MouseEvent) => {
+        ev.preventDefault();
+        if (this.selectedSprite < 0)
+            return;
+
+        const clickPos = getMousePos(canvas, ev, 8 * 2);
+        const origSprite = this.level[clickPos.y][clickPos.x];
+        if (origSprite == this.selectedSprite)
+            return;
+
+        let stack: { x: number, y: number }[] = [clickPos];
+        while (true) {
+            const pos = stack.pop();
+            if (!pos) break;
+
+            if (this.level[pos.y][pos.x] != origSprite)
+                continue;
+
+            this.level[pos.y][pos.x] = this.selectedSprite;
+            for (let y of [-1, 0, 1]) {
+                const newY = y + pos.y;
+                if (newY < 0 || newY >= 30)
+                    continue;
+
+                for (let x of [-1, 0, 1]) {
+                    const newX = x + pos.x;
+                    if (newX < 0 || newX >= 32 || this.level[newY][newX] != origSprite)
+                        continue;
+
+                    stack.push({ x: newX, y: newY });
+                }
+            }
+        }
+
+        this.serialize();
+        this.drawScreen();
+    });
 }
 
 // Creates an empty level array
@@ -283,13 +321,11 @@ function serialize() {
     // Join everything together
     while (compressed.length) {
         let slice = compressed.splice(0, 254);
-        console.log(slice.length)
         result = result.concat(slice.length, slice);
     }
     result.push(0);
 
     // Convert the array to C syntax
-    //this.cArray = new Uint8Array(result);
     this.cArray = '';
     this.size = result.length;
     while (result.length)
@@ -304,19 +340,25 @@ function deserialize() {
     const noComments: string[] = cleaned.map((a: string) => a.replace(/\/\/.*$/, '').replace(/ /g, ''));
     const numbers: number[] = noComments.join('').split(',').map((x: string) => parseInt(x));
 
-    let i: number = 0;
-
     // Load the palettes
+    let i: number;
     this.palettes = [];
     for (i = 0; numbers[i] != 0xFF; i++)
         this.palettes.push(numbers[i]);
+    numbers.splice(0, i + 1);
 
     // Decompress the level and attribute data
     let flat: number[] = [];
-    for (i += 1; i < numbers.length; i += 2) {
-        for (let j = 0; j < (numbers[i] == 0 ? 256 : numbers[i]); j++) {
-            let val = numbers[i + 1];
-            flat.push(val);
+    while (numbers) {
+        const length = numbers.splice(0, 1)[0];
+        if (length == 0)
+            break;
+
+        const block = numbers.splice(0, length);
+        for (let i = 0; i < block.length; i += 2) {
+            for (let j = 0; j < (block[i] == 0 ? 256 : block[i]); j++) {
+                flat.push(block[i + 1]);
+            }
         }
     }
 
@@ -334,8 +376,6 @@ function deserialize() {
 
         this.attributes.push(row);
     }
-    console.log(this.attributes);
-
 
     // Build a 2D array from the flat array
     this.level = [];
