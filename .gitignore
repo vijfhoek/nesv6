@@ -135,3 +135,7 @@ leveledit/bundle.js
 *.o
 
 # End of https://www.gitignore.io/api/linux,macos,emacs,windows
+bundle.js*
+v6.cdl
+v6.nes
+v6.nes.deb
