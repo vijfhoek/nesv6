@@ -7,17 +7,16 @@ export default class {
     hoverPos:  { x: number, y: number } = { x: 0, y: 0 };
 
     draw() {
-        let image = this.context.createImageData(512, 480);
+        const image   = this.context.createImageData(512, 480);
         const hover_x = this.hoverPos.x;
         const hover_y = this.hoverPos.y;
 
         for (let y = 0; y < 30; y++) {
             for (let x = 0; x < 32; x++) {
-                const val = this.vue.level[y][x];
+                const val    = this.vue.level[y][x];
                 const sprite = this.vue.sprites[val];
 
                 let attr = this.vue.attributes[y >> 1][x >> 1];
-
                 if (this.vue.selectedColor >= 0 && x >> 1 == hover_x && y >> 1 == hover_y)
                     attr = this.vue.selectedColor;
 
@@ -25,34 +24,29 @@ export default class {
             }
         }
 
-        if (this.vue.selectedSprite >= 0) {
-            if (hover_x >= 0 && hover_y >= 0) {
-                let attr = this.vue.attributes[hover_y >> 1][hover_x >> 1];
-                let sprite = this.vue.sprites[this.vue.selectedSprite];
-                this.vue.drawSprite(image, hover_x * 8, hover_y * 8, sprite, attr, 2);
-            }
+        if (this.vue.selectedSprite >= 0 && hover_x >= 0 && hover_y >= 0) {
+            const attr   = this.vue.attributes[hover_y >> 1][hover_x >> 1];
+            const sprite = this.vue.sprites[this.vue.selectedSprite];
+            this.vue.drawSprite(image, hover_x * 8, hover_y * 8, sprite, attr, 2);
         }
 
         this.context.putImageData(image, 0, 0);
     }
 
     onMouseMoveColor(event: MouseEvent) {
-        this.hoverPos = this.vue.getMousePos(this.canvas, event, 16 * 2);
-
+        this.hoverPos = this.vue.getMousePos(this.canvas, event, 32);
         this.draw();
 
         this.context.strokeStyle = '#fff';
-        this.context.strokeRect(this.hoverPos.x * 16 * 2, this.hoverPos.y * 16 * 2, 16 * 2, 16 * 2);
+        this.context.strokeRect(this.hoverPos.x * 32, this.hoverPos.y * 32, 32, 32);
 
         this.context.beginPath();
-
         // Horizontal subdivision line
-        this.context.moveTo(this.hoverPos.x * 16 * 2,      this.hoverPos.y * 16 * 2 + 16);
-        this.context.lineTo(this.hoverPos.x * 16 * 2 + 32, this.hoverPos.y * 16 * 2 + 16);
-
+        this.context.moveTo(this.hoverPos.x * 32,      this.hoverPos.y * 32 + 16);
+        this.context.lineTo(this.hoverPos.x * 32 + 32, this.hoverPos.y * 32 + 16);
         // Vertical subdivision line
-        this.context.moveTo(this.hoverPos.x * 16 * 2 + 16, this.hoverPos.y * 16 * 2);
-        this.context.lineTo(this.hoverPos.x * 16 * 2 + 16, this.hoverPos.y * 16 * 2 + 32);
+        this.context.moveTo(this.hoverPos.x * 32 + 16, this.hoverPos.y * 32);
+        this.context.lineTo(this.hoverPos.x * 32 + 16, this.hoverPos.y * 32 + 32);
 
         this.context.setLineDash([2, 2]);
         this.context.stroke();
@@ -60,7 +54,7 @@ export default class {
     }
 
     onMouseMoveSprite(event: MouseEvent) {
-        this.hoverPos = this.vue.getMousePos(this.canvas, event, 8 * 2);
+        this.hoverPos = this.vue.getMousePos(this.canvas, event, 16);
 
         if (this.mouseDown && this.vue.selectedSprite >= 0) {
             this.vue.level[this.hoverPos.y][this.hoverPos.x] = this.vue.selectedSprite;
@@ -70,7 +64,7 @@ export default class {
         this.draw();
 
         this.context.strokeStyle = '#fff';
-        this.context.strokeRect(this.hoverPos.x * 8 * 2, this.hoverPos.y * 8 * 2, 8 * 2, 8 * 2);
+        this.context.strokeRect(this.hoverPos.x * 16, this.hoverPos.y * 16, 16, 16);
     }
 
     onMouseMove(event: MouseEvent) {
@@ -81,7 +75,7 @@ export default class {
     }
 
     onClick(event: MouseEvent) {
-        const pos = this.vue.getMousePos(this.canvas, event, 8 * 2);
+        const pos = this.vue.getMousePos(this.canvas, event, 16);
         if (this.vue.selectedSprite < 0)
             return;
 
@@ -95,7 +89,7 @@ export default class {
         if (this.vue.selectedSprite < 0)
             return;
 
-        const clickPos = this.vue.getMousePos(this.canvas, event, 8 * 2);
+        const clickPos = this.vue.getMousePos(this.canvas, event, 16);
         const origSprite = this.vue.level[clickPos.y][clickPos.x];
         if (origSprite == this.vue.selectedSprite)
             return;

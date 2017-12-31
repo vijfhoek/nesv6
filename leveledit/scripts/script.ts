@@ -52,35 +52,32 @@ const vue = new Vue({
     el: '.app',
     data: data,
     methods: {
+        getMousePos: getMousePos,
+
         serialize:   serialize,
         deserialize: deserialize,
+        clearLevel:  clearLevel,
 
-        drawPixel:       drawPixel,
-        drawSprite:      drawSprite,
-
-        getMousePos:  getMousePos,
+        drawPixel:    drawPixel,
+        drawSprite:   drawSprite,
         selectSprite: selectSprite,
         selectColor:  selectColor,
 
         parseChr:    parseChr,
         onChrUpload: onChrUpload,
 
-        clearLevel:       clearLevel,
-
         showColorPicker: showColorPicker,
         onColorPicked:   onColorPicked
     },
     created: function() {
-        let levelJson = localStorage.getItem('level');
-        this.level = levelJson ? JSON.parse(levelJson) : createEmpty();
-
-        let sprites = localStorage.getItem('sprites');
-        this.sprites = sprites ? JSON.parse(sprites) : [];
-
-        let palettes = localStorage.getItem('palettes');
-        this.palettes = palettes ? JSON.parse(palettes) : [];
-
+        let levelJson  = localStorage.getItem('level');
+        let sprites    = localStorage.getItem('sprites');
+        let palettes   = localStorage.getItem('palettes');
         let attributes = localStorage.getItem('attributes');
+
+        this.level      = levelJson  ? JSON.parse(levelJson)  : createEmpty();
+        this.sprites    = sprites    ? JSON.parse(sprites)    : [];
+        this.palettes   = palettes   ? JSON.parse(palettes)   : [];
         this.attributes = attributes ? JSON.parse(attributes) : [];
     },
     mounted: function() {
@@ -96,15 +93,13 @@ const vue = new Vue({
 
 function selectColor(color: number) {
     this.selectedSprite = -1;
-    this.selectedColor = color;
-
+    this.selectedColor  = color;
     this.spriteCanvas.draw();
 }
 
 function selectSprite(spriteId: number) {
     this.selectedSprite = spriteId;
     this.selectedColor = -1;
-
     this.spriteCanvas.draw();
 }
 
@@ -113,8 +108,8 @@ function showColorPicker(ev: MouseEvent, color: number, index: number) {
     const paletteRect = palette.getBoundingClientRect();
 
     const picker = document.querySelector('.color-picker') as HTMLDivElement;
-    picker.style.left = ev.clientX - paletteRect.left + 'px';
-    picker.style.top = ev.clientY - paletteRect.top + 'px';
+    picker.style.left    = ev.clientX - paletteRect.left + 'px';
+    picker.style.top     = ev.clientY - paletteRect.top + 'px';
     picker.style.display = 'block';
 
     picker.querySelectorAll("div").forEach(d => d.removeAttribute('data-selected'));
@@ -145,7 +140,7 @@ function onColorPicked(selection: number) {
 function getMousePos(canvas: HTMLCanvasElement, ev: MouseEvent, div: number): { x: number, y: number } {
     const rect = canvas.getBoundingClientRect();
     const x = Math.floor((ev.clientX - rect.left) / div);
-    const y = Math.floor((ev.clientY - rect.top) / div);
+    const y = Math.floor((ev.clientY - rect.top)  / div);
     return { x: x, y: y };
 }
 
@@ -335,7 +330,7 @@ function parseChr(content: ArrayBuffer) {
 
 // Handles someone uploading a .chr file
 function onChrUpload(e: UIEvent) {
-    let target = <HTMLInputElement>e.target;
+    let target = e.target as HTMLInputElement;
     if (!target.files || target.files.length == 0)
         return;
 
@@ -349,12 +344,10 @@ function onChrUpload(e: UIEvent) {
 }
 
 function clearLevel() {
-    if (!confirm('Are you sure you want to clear the level?')) {
+    if (!confirm('Are you sure you want to clear the level?'))
         return;
-    }
 
     this.level = createEmpty();
-
     this.attributes = [];
     for (let i = 0; i < 15; i++)
         this.attributes.push(Array(16).fill(0))

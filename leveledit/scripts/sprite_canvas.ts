@@ -1,29 +1,25 @@
 export default class {
     canvas: HTMLCanvasElement;
     context: CanvasRenderingContext2D;
-
     vue: any;
 
     draw() {
         let image = this.context.createImageData(512, 512);
-        for (let i = 0; i < 256; i++) {
-            const sprite = this.vue.sprites[i];
-
-            const x_pos = i % 16;
-            const y_pos = Math.floor(i / 16);
-
-            const color = this.vue.selectedColor < 0 ? 0 : this.vue.selectedColor;
-            this.vue.drawSprite(image, x_pos * 8, y_pos * 8, sprite, color, 4);
+        for (let y = 0; y < 16; y++) {
+            for (let x = 0; x < 16; x++) {
+                const sprite = this.vue.sprites[y * 16 + x];
+                const color = this.vue.selectedColor < 0 ? 0 : this.vue.selectedColor;
+                this.vue.drawSprite(image, x * 8, y * 8, sprite, color, 4);
+            }
         }
-
         this.context.putImageData(image, 0, 0);
 
         // Draw a rectangle around the selected sprite
         if (this.vue.selectedSprite >= 0) {
             this.context.strokeStyle = '#fff';
-            this.context.strokeRect((this.vue.selectedSprite % 16) * 8 * 4,
-                                    Math.floor(this.vue.selectedSprite / 16) * 8 * 4, 
-                                    8 * 4, 8 * 4);
+            this.context.strokeRect((this.vue.selectedSprite % 16) * 32,
+                                    Math.floor(this.vue.selectedSprite / 16) * 32, 
+                                    32, 32);
         }
     }
 
@@ -31,12 +27,12 @@ export default class {
         this.draw();
         this.context.strokeStyle = '#ddd';
 
-        const pos = this.vue.getMousePos(this.canvas, event, 8 * 4);
-        this.context.strokeRect(pos.x * 8 * 4, pos.y * 8 * 4, 8 * 4, 8 * 4);
+        const pos = this.vue.getMousePos(this.canvas, event, 32);
+        this.context.strokeRect(pos.x * 32, pos.y * 32, 32, 32);
     }
 
     onClick(event: MouseEvent) {
-        const pos = this.vue.getMousePos(this.canvas, event, 8 * 4);
+        const pos = this.vue.getMousePos(this.canvas, event, 32);
         this.vue.selectSprite(pos.y * 16 + pos.x);
         this.draw();
     }
