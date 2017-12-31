@@ -1,68 +1,74 @@
 declare function require(name: string) : any;
 let Vue = require('vue');
 
+import SpriteCanvas from './sprite_canvas';
+import ScreenCanvas from './screen_canvas';
+
 let colors = require('./palette').colors;
 
 class AppData {
-    level: number[][];
+    level:      number[][];
     attributes: number[][];
 
-    sprites: number[][];
+    sprites:  number[][];
     palettes: number[];
-    attr: number[];
+    attr:     number[];
 
-    colors: number[];
-    selectedColor: number;
+    colors:         number[];
+    selectedColor:  number;
     selectedSprite: number;
-    hoverPos: { x: number, y: number };
-    mouseDown: boolean;
+    hoverPos:       { x: number, y: number };
+    mouseDown:      boolean;
 
     cArray: string;
-    size: number;
+    size:   number;
+
+    screenCanvas: ScreenCanvas | null;
+    spriteCanvas: SpriteCanvas | null;
 }
 
 var data: AppData = {
-    level: [],
+    level:      [],
     attributes: [],
 
-    sprites: [],
+    sprites:  [],
     palettes: [0x0d, 0x00, 0x10, 0x20],
-    attr: Array(64).fill(0),
+    attr:     Array(64).fill(0),
 
-    colors: colors,
-    selectedColor: -1,
+    colors:         colors,
+    selectedColor:  -1,
     selectedSprite: -1,
-    hoverPos: { x: -1, y: -1 },
-    mouseDown: false,
+    hoverPos:       { x: -1, y: -1 },
+    mouseDown:      false,
 
     cArray: "",
-    size: 0
+    size:   0,
+
+    spriteCanvas: null,
+    screenCanvas: null
 }
 
 const vue = new Vue({
     el: '.app',
     data: data,
     methods: {
-        serialize: serialize,
+        serialize:   serialize,
         deserialize: deserialize,
 
-        drawPixel: drawPixel,
-        drawSprite: drawSprite,
-        drawScreen: drawScreen,
-        drawSpriteSheet: drawSpriteSheet,
+        drawPixel:       drawPixel,
+        drawSprite:      drawSprite,
 
+        getMousePos:  getMousePos,
         selectSprite: selectSprite,
-        selectColor: selectColor,
+        selectColor:  selectColor,
 
-        parseChr: parseChr,
+        parseChr:    parseChr,
         onChrUpload: onChrUpload,
 
-        initSpriteCanvas: initSpriteCanvas,
-        initScreenCanvas: initScreenCanvas,
-        clearLevel: clearLevel,
+        clearLevel:       clearLevel,
 
         showColorPicker: showColorPicker,
-        onColorPicked: onColorPicked
+        onColorPicked:   onColorPicked
     },
     created: function() {
         let levelJson = localStorage.getItem('level');
@@ -78,11 +84,11 @@ const vue = new Vue({
         this.attributes = attributes ? JSON.parse(attributes) : [];
     },
     mounted: function() {
-        this.initSpriteCanvas();
-        this.initScreenCanvas();
+        this.spriteCanvas = new SpriteCanvas(this);
+        this.screenCanvas = new ScreenCanvas(this);
 
-        this.drawSpriteSheet();
-        this.drawScreen();
+        this.spriteCanvas.draw();
+        this.screenCanvas.draw();
 
         this.serialize();
     }
@@ -92,20 +98,21 @@ function selectColor(color: number) {
     this.selectedSprite = -1;
     this.selectedColor = color;
 
-    this.drawSpriteSheet();
+    this.spriteCanvas.draw();
 }
 
 function selectSprite(spriteId: number) {
     this.selectedSprite = spriteId;
     this.selectedColor = -1;
 
-    this.drawSpriteSheet();
+    this.spriteCanvas.draw();
 }
 
 function showColorPicker(ev: MouseEvent, color: number, index: number) {
-    const picker = document.querySelector('.color-picker') as HTMLDivElement;
-    const palette = document.querySelector('.palette') as HTMLDivElement;
+    const palette     = document.querySelector('.palette') as HTMLDivElement;
     const paletteRect = palette.getBoundingClientRect();
+
+    const picker = document.querySelector('.color-picker') as HTMLDivElement;
     picker.style.left = ev.clientX - paletteRect.left + 'px';
     picker.style.top = ev.clientY - paletteRect.top + 'px';
     picker.style.display = 'block';
@@ -130,8 +137,8 @@ function onColorPicked(selection: number) {
     const index = parseInt(indexStr);
     Vue.set(this.palettes, index, selection);
 
-    this.drawSpriteSheet();
-    this.drawScreen();
+    this.spriteCanvas.draw();
+    this.screenCanvas.draw();
     this.serialize();
 }
 
@@ -142,126 +149,7 @@ function getMousePos(canvas: HTMLCanvasElement, ev: MouseEvent, div: number): { 
     return { x: x, y: y };
 }
 
-function initSpriteCanvas() {
-    const canvas = document.querySelector('.sprite-canvas') as HTMLCanvasElement;
-    const context = canvas.getContext('2d');
-    if (!context)
-        return;
 
-    canvas.addEventListener('mousemove', (ev: MouseEvent) => {
-        this.drawSpriteSheet();
-
-        const pos = getMousePos(canvas, ev, 8 * 4);
-        context.strokeStyle = '#ddd';
-        context.strokeRect(pos.x * 8 * 4, pos.y * 8 * 4, 8 * 4, 8 * 4);
-    });
-
-    canvas.addEventListener('click', (ev: MouseEvent) => {
-        const pos = getMousePos(canvas, ev, 8 * 4);
-        this.selectSprite(pos.y * 16 + pos.x);
-        this.drawSpriteSheet();
-    })
-}
-
-function initScreenCanvas() {
-    const canvas = document.querySelector('.screen-canvas') as HTMLCanvasElement;
-    const context = canvas.getContext('2d');
-    if (!context)
-        return;
-
-    canvas.addEventListener('mousedown', (ev: MouseEvent) => { this.mouseDown = true; });
-    canvas.addEventListener('mouseup', (ev: MouseEvent) => { this.mouseDown = false; });
-
-    canvas.addEventListener('mousemove', (ev: MouseEvent) => {
-        if (this.selectedColor >= 0) {
-            this.hoverPos = getMousePos(canvas, ev, 16 * 2);
-
-            // if (this.mouseDown && this.selectedSprite >= 0)
-            //     this.level[this.hoverPos.y][this.hoverPos.x] = this.selectedSprite;
-
-            this.drawScreen();
-
-            context.strokeStyle = '#fff';
-            context.strokeRect(this.hoverPos.x * 16 * 2, this.hoverPos.y * 16 * 2, 16 * 2, 16 * 2);
-
-            context.beginPath();
-
-            // Horizontal subdivision line
-            context.moveTo(this.hoverPos.x * 16 * 2,      this.hoverPos.y * 16 * 2 + 16);
-            context.lineTo(this.hoverPos.x * 16 * 2 + 32, this.hoverPos.y * 16 * 2 + 16);
-
-            // Vertical subdivision line
-            context.moveTo(this.hoverPos.x * 16 * 2 + 16, this.hoverPos.y * 16 * 2);
-            context.lineTo(this.hoverPos.x * 16 * 2 + 16, this.hoverPos.y * 16 * 2 + 32);
-
-            context.setLineDash([2, 2]);
-            context.stroke();
-            context.setLineDash([]);
-
-            return;
-        }
-
-        this.hoverPos = getMousePos(canvas, ev, 8 * 2);
-
-        if (this.mouseDown && this.selectedSprite >= 0) {
-            this.level[this.hoverPos.y][this.hoverPos.x] = this.selectedSprite;
-            this.serialize();
-        }
-
-        this.drawScreen();
-
-        context.strokeStyle = '#fff';
-        context.strokeRect(this.hoverPos.x * 8 * 2, this.hoverPos.y * 8 * 2, 8 * 2, 8 * 2);
-    });
-
-    canvas.addEventListener('click', (ev: MouseEvent) => {
-        const pos = getMousePos(canvas, ev, 8 * 2);
-
-        if (this.selectedSprite >= 0) {
-            this.level[pos.y][pos.x] = this.selectedSprite;
-            this.serialize();
-        }
-        this.drawScreen();
-    });
-
-    canvas.addEventListener('contextmenu', (ev: MouseEvent) => {
-        ev.preventDefault();
-        if (this.selectedSprite < 0)
-            return;
-
-        const clickPos = getMousePos(canvas, ev, 8 * 2);
-        const origSprite = this.level[clickPos.y][clickPos.x];
-        if (origSprite == this.selectedSprite)
-            return;
-
-        let stack: { x: number, y: number }[] = [clickPos];
-        while (true) {
-            const pos = stack.pop();
-            if (!pos) break;
-
-            if (this.level[pos.y][pos.x] != origSprite)
-                continue;
-
-            this.level[pos.y][pos.x] = this.selectedSprite;
-            for (let y of [-1, 0, 1]) {
-                const newY = y + pos.y;
-                if (newY < 0 || newY >= 30)
-                    continue;
-
-                for (let x of [-1, 0, 1]) {
-                    const newX = x + pos.x;
-                    if (newX < 0 || newX >= 32 || this.level[newY][newX] != origSprite)
-                        continue;
-
-                    stack.push({ x: newX, y: newY });
-                }
-            }
-        }
-
-        this.serialize();
-        this.drawScreen();
-    });
-}
 
 // Creates an empty level array
 function createEmpty(): number[][] {
@@ -386,8 +274,8 @@ function deserialize() {
     localStorage.setItem('palettes',   JSON.stringify(this.palettes));
     localStorage.setItem('level',      JSON.stringify(this.level));
 
-    this.drawSpriteSheet();
-    this.drawScreen();
+    this.spriteCanvas.draw();
+    this.screenCanvas.draw();
 }
 
 // Draw a pixel at (x, y) with scale scale
@@ -411,75 +299,6 @@ function drawSprite(image: ImageData, x_pos: number, y_pos: number, sprite: numb
             this.drawPixel(image, x_pos + x, y_pos + y, val, scale);
         }
     }
-}
-
-// Draws the loaded screen into .screen-canvas
-function drawScreen() {
-    let canvas = <HTMLCanvasElement>document.querySelector('.screen-canvas');
-    let context = canvas.getContext('2d');
-    if (context == null) {
-        alert('Could not get 2D context for screen canvas');
-        return;
-    }
-
-    let image = context.createImageData(512, 480);
-    const hover_x = this.hoverPos.x;
-    const hover_y = this.hoverPos.y;
-
-    for (let y = 0; y < 30; y++) {
-        for (let x = 0; x < 32; x++) {
-            const val = this.level[y][x];
-            const sprite = this.sprites[val];
-
-            let attr = this.attributes[y >> 1][x >> 1];
-
-            if (this.selectedColor >= 0 && x >> 1 == hover_x && y >> 1 == hover_y)
-                attr = this.selectedColor;
-
-            this.drawSprite(image, x * 8, y * 8, sprite, attr, 2);
-        }
-    }
-
-    if (this.selectedSprite >= 0) {
-        if (hover_x >= 0 && hover_y >= 0) {
-            let attr = this.attributes[hover_y >> 1][hover_x >> 1];
-            let sprite = this.sprites[this.selectedSprite];
-            this.drawSprite(image, hover_x * 8, hover_y * 8, sprite, attr, 2);
-        }
-    }
-
-    context.putImageData(image, 0, 0);
-}
-
-// Draws the spritesheet into .sprite-canvas
-function drawSpriteSheet() {
-    let canvas = document.querySelector('.sprite-canvas') as HTMLCanvasElement;
-    let context = canvas.getContext('2d');
-    if (context == null) {
-        alert('Could not get 2D context for sprite canvas');
-        return;
-    }
-
-    let image = context.createImageData(512, 512);
-    for (let i = 0; i < 256; i++) {
-        const sprite = this.sprites[i];
-
-        const x_pos = i % 16;
-        const y_pos = Math.floor(i / 16);
-
-        const color = this.selectedColor < 0 ? 0 : this.selectedColor;
-        this.drawSprite(image, x_pos * 8, y_pos * 8, sprite, color, 4);
-    }
-
-    context.putImageData(image, 0, 0);
-
-    if (this.selectedSprite < 0)
-        return;
-
-    context.strokeStyle = '#fff';
-    context.strokeRect((this.selectedSprite % 16) * 8 * 4,
-                       Math.floor(this.selectedSprite / 16) * 8 * 4,
-                       8 * 4, 8 * 4);
 }
 
 // Parses a chr file and loads its sprites into this.sprites
@@ -510,8 +329,8 @@ function parseChr(content: ArrayBuffer) {
 
     localStorage.setItem('sprites', JSON.stringify(this.sprites));
 
-    this.drawSpriteSheet();
-    this.drawScreen();
+    this.spriteCanvas.draw();
+    this.screenCanvas.draw();
 }
 
 // Handles someone uploading a .chr file
@@ -530,14 +349,16 @@ function onChrUpload(e: UIEvent) {
 }
 
 function clearLevel() {
-    if (confirm('Are you sure you want to clear the level?')) {
-        this.level = createEmpty();
-
-        this.attributes = [];
-        for (let i = 0; i < 15; i++)
-            this.attributes.push(Array(16).fill(0))
-
-        this.drawScreen();
-        this.serialize();
+    if (!confirm('Are you sure you want to clear the level?')) {
+        return;
     }
+
+    this.level = createEmpty();
+
+    this.attributes = [];
+    for (let i = 0; i < 15; i++)
+        this.attributes.push(Array(16).fill(0))
+
+    this.drawScreen();
+    this.serialize();
 }
