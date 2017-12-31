@@ -1,6 +1,9 @@
 .import _main
+.import _nmi_occurred
+
 .export __STARTUP__:absolute=1
 .import __STACK_START__, __STACKSIZE__
+
 .import initlib, copydata
 .include "zeropage.inc"
 
@@ -69,22 +72,41 @@ start:
 
 
 nmi:
+    lda #$02
+    sta $4014
+
+    lda #$01
+    sta _nmi_occurred
+    rti
+
 irq:
     rti
+
+
+.export _wait_vblank
+_wait_vblank:
+    lda _nmi_occurred
+    beq _wait_vblank
+
+    lda #0
+    sta _nmi_occurred
+
+    rts
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;             RODATA               ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 .segment "RODATA"
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;             VECTORS              ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 .segment "VECTORS"
 
-.word nmi   ; $fffa vblank nmi
-.word start      ; $fffc reset
-.word irq   ; $fffe irq / brk
+.word nmi    ; $fffa vblank nmi
+.word start  ; $fffc reset
+.word irq    ; $fffe irq / brk
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;              CHARS               ;;;
