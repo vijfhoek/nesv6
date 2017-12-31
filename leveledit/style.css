@@ -38,6 +38,10 @@ table {
     position: relative;
 }
 
+.palette__add {
+    cursor: pointer;
+}
+
 .palette .palette__color {
     width: 30px;
     height: 32px;
