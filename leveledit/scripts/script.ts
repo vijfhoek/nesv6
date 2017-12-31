@@ -3,6 +3,7 @@ let Vue = require('vue');
 
 import SpriteCanvas from './sprite_canvas';
 import ScreenCanvas from './screen_canvas';
+import ChrLoader from './chr_loader'
 
 let colors = require('./palette').colors;
 
@@ -25,6 +26,7 @@ class AppData {
 
     screenCanvas: ScreenCanvas | null;
     spriteCanvas: SpriteCanvas | null;
+    chrLoader:    ChrLoader    | null;
 }
 
 var data: AppData = {
@@ -45,7 +47,8 @@ var data: AppData = {
     size:   0,
 
     spriteCanvas: null,
-    screenCanvas: null
+    screenCanvas: null,
+    chrLoader:    null
 }
 
 const vue = new Vue({
@@ -63,11 +66,10 @@ const vue = new Vue({
         selectSprite: selectSprite,
         selectColor:  selectColor,
 
-        parseChr:    parseChr,
-        onChrUpload: onChrUpload,
-
         showColorPicker: showColorPicker,
-        onColorPicked:   onColorPicked
+        onColorPicked:   onColorPicked,
+
+        toHex: toHex
     },
     created: function() {
         let levelJson  = localStorage.getItem('level');
@@ -81,6 +83,7 @@ const vue = new Vue({
         this.attributes = attributes ? JSON.parse(attributes) : [];
     },
     mounted: function() {
+        this.chrLoader = new ChrLoader(this);
         this.spriteCanvas = new SpriteCanvas(this);
         this.screenCanvas = new ScreenCanvas(this);
 
@@ -90,6 +93,10 @@ const vue = new Vue({
         this.serialize();
     }
 });
+
+function toHex(i: number) {
+    return (i < 16 ? '0' : '') + i.toString(16).toUpperCase();
+}
 
 function selectColor(color: number) {
     this.selectedSprite = -1;
@@ -117,7 +124,6 @@ function showColorPicker(ev: MouseEvent, color: number, index: number) {
     div && div.setAttribute('data-selected', '');
 
     picker.setAttribute('data-index', index.toString());
-
     ev.preventDefault();
 }
 
@@ -144,8 +150,6 @@ function getMousePos(canvas: HTMLCanvasElement, ev: MouseEvent, div: number): { 
     return { x: x, y: y };
 }
 
-
-
 // Creates an empty level array
 function createEmpty(): number[][] {
     const level: number[][] = [];
@@ -158,7 +162,6 @@ function createEmpty(): number[][] {
     }
     return level;
 }
-
 
 // Creates a C array from the loaded level
 function serialize() {
@@ -214,7 +217,6 @@ function serialize() {
     while (result.length)
         this.cArray += result.splice(0, 15).join(', ') + ',\n'
 }
-
 
 // Parses a C array and loads it as a level
 function deserialize() {
@@ -294,53 +296,6 @@ function drawSprite(image: ImageData, x_pos: number, y_pos: number, sprite: numb
             this.drawPixel(image, x_pos + x, y_pos + y, val, scale);
         }
     }
-}
-
-// Parses a chr file and loads its sprites into this.sprites
-function parseChr(content: ArrayBuffer) {
-    this.sprites = [];
-
-    for (let i = 0; i < 256; i++) {
-        // Get an Uint8Array of the sprite data
-        let slice = content.slice(i * 0x10 + 0x1000, i * 0x10 + 0x1010);
-        let sprite = new Uint8Array(slice);
-
-        let pattern = [];
-        for (let y = 0; y < 8; y++) {
-            let row = [];
-            for (let x = 0; x < 8; x++) {
-                // Calculate the pixel value
-                const h = (sprite[y + 8] >> (7 - x)) & 1;
-                const l = (sprite[y] >> (7 - x)) & 1;
-                const val = h * 2 + l;
-
-                row.push(val);
-            }
-            pattern.push(row);
-        }
-
-        this.sprites.push(pattern);
-    }
-
-    localStorage.setItem('sprites', JSON.stringify(this.sprites));
-
-    this.spriteCanvas.draw();
-    this.screenCanvas.draw();
-}
-
-// Handles someone uploading a .chr file
-function onChrUpload(e: UIEvent) {
-    let target = e.target as HTMLInputElement;
-    if (!target.files || target.files.length == 0)
-        return;
-
-    let reader = new FileReader();
-    reader.onload = (ev: Event) => {
-        var content = (ev.target as FileReader).result;
-        this.parseChr(content);
-    };
-
-    reader.readAsArrayBuffer(target.files[0]);
 }
 
 function clearLevel() {

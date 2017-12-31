@@ -14,7 +14,7 @@
             <div class="column column--pattern-table">
                 <h2>Pattern table</h2>
                 <canvas class="sprite-canvas" width="512" height="512"></canvas><br>
-                <input type="file" class="chr-file" v-on:change="onChrUpload"><br>
+                <input type="file" class="chr-file" v-on:change="chrLoader.onChrUpload($event)"><br>
 
                 <h2>Palette</h2>
                 <div class="palette">
@@ -23,15 +23,17 @@
                          v-on:click="selectColor(i >> 2)"
                          v-on:contextmenu="showColorPicker($event, color, i)"
                          class="palette__color">
-                        {{ (color < 16 ? '0' : '') + color.toString(16).toUpperCase() }}
+                        {{ toHex(color) }}
                     </div>
-                    <span v-if="palettes.length < 16"
-                          v-on:click="palettes = palettes.concat([0, 0, 0, 0])">+</span>
+                    <span class="palette__add" v-if="palettes.length < 16"
+                          v-on:click="palettes = palettes.concat([0, 0, 0, 0])">
+                        +
+                    </span>
 
                     <div class="color-picker">
                         <div v-for="color in 64" :data-color="color - 1"
                              v-on:click="onColorPicked(color - 1)">
-                            {{ (color <= 16 ? '0' : '') + (color - 1).toString(16).toUpperCase() }}
+                            {{ toHex(color - 1) }}
                         </div>
                     </div>
                 </div>
