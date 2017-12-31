@@ -1,21 +1,17 @@
 .include "zeropage.inc"
+.include "util.inc"
 
 .export _read_controller
 _read_controller:
-    lda #$01
-    sta $4016
-    lda #$00
-    sta $4016
-    sta ptr1
+    stm CONTROLLER_1, #1
+    stm CONTROLLER_1, #0
+    stm ptr1, #$00
 
-    ldx #8
-@loop:
-    lda $4016
-    lsr a
-    rol ptr1
-
-    dex
-    bne @loop
+.repeat 8
+    lda CONTROLLER_1  ; Read the controller output
+    lsr a             ; Shift the bit into carry
+    rol ptr1          ; Rotate the carry into ptr1
+.endrepeat
 
     lda ptr1
     rts
