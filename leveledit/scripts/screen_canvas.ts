@@ -80,6 +80,50 @@ export default class {
             this.onMouseMoveSprite(event);
     }
 
+    onClick(event: MouseEvent) {
+        const pos = this.vue.getMousePos(this.canvas, event, 8 * 2);
+        if (this.vue.selectedSprite < 0)
+            return;
+
+        this.vue.level[pos.y][pos.x] = this.vue.selectedSprite;
+        this.vue.serialize();
+        this.draw();
+    }
+
+    onContextMenu(event: MouseEvent) {
+        event.preventDefault();
+        if (this.vue.selectedSprite < 0)
+            return;
+
+        const clickPos = this.vue.getMousePos(this.canvas, event, 8 * 2);
+        const origSprite = this.vue.level[clickPos.y][clickPos.x];
+        if (origSprite == this.vue.selectedSprite)
+            return;
+
+        let stack: { x: number, y: number }[] = [clickPos];
+        let pos: { x: number, y: number } | undefined;
+        while (pos = stack.pop()) {
+            if (this.vue.level[pos.y][pos.x] != origSprite)
+                continue;
+
+            this.vue.level[pos.y][pos.x] = this.vue.selectedSprite;
+            for (let y of [-1, 0, 1]) {
+                const newY = y + pos.y;
+                if (newY < 0 || newY >= 30)
+                    continue;
+
+                for (let x of [-1, 0, 1]) {
+                    const newX = x + pos.x;
+                    if (newX >= 0 && newX < 32 && this.vue.level[newY][newX] == origSprite)
+                        stack.push({ x: newX, y: newY });
+                }
+            }
+        }
+
+        this.vue.serialize();
+        this.draw();
+    }
+
     constructor(vue: any) {
         this.vue = vue;
         this.canvas = document.querySelector('.screen-canvas') as HTMLCanvasElement;
@@ -89,57 +133,11 @@ export default class {
             throw 'Could not get 2D context';
         this.context = context;
 
-        this.canvas.addEventListener('mousedown', () => { this.mouseDown = true; });
-        this.canvas.addEventListener('mouseup', () => { this.mouseDown = false; });
-
-        this.canvas.addEventListener('mousemove', (e: MouseEvent) => { this.onMouseMove(e) });
-
-        this.canvas.addEventListener('click', (ev: MouseEvent) => {
-            const pos = this.vue.getMousePos(this.canvas, ev, 8 * 2);
-
-            if (vue.selectedSprite >= 0) {
-                vue.level[pos.y][pos.x] = this.vue.selectedSprite;
-                vue.serialize();
-            }
-            this.draw();
-        });
-
-        this.canvas.addEventListener('contextmenu', (ev: MouseEvent) => {
-            ev.preventDefault();
-            if (vue.selectedSprite < 0)
-                return;
-
-            const clickPos = this.vue.getMousePos(this.canvas, ev, 8 * 2);
-            const origSprite = vue.level[clickPos.y][clickPos.x];
-            if (origSprite == vue.selectedSprite)
-                return;
-
-            let stack: { x: number, y: number }[] = [clickPos];
-            while (true) {
-                const pos = stack.pop();
-                if (!pos) break;
-
-                if (vue.level[pos.y][pos.x] != origSprite)
-                    continue;
-
-               vue.level[pos.y][pos.x] = vue.selectedSprite;
-                for (let y of [-1, 0, 1]) {
-                    const newY = y + pos.y;
-                    if (newY < 0 || newY >= 30)
-                        continue;
-
-                    for (let x of [-1, 0, 1]) {
-                        const newX = x + pos.x;
-                        if (newX < 0 || newX >= 32 || vue.level[newY][newX] != origSprite)
-                            continue;
-
-                        stack.push({ x: newX, y: newY });
-                    }
-                }
-            }
-
-            vue.serialize();
-            this.draw();
-        });
+        this.canvas.addEventListener('mousedown',   (e: MouseEvent) => this.mouseDown = true);
+        this.canvas.addEventListener('mouseup',     (e: MouseEvent) => this.mouseDown = false);
+        this.canvas.addEventListener('mouseleave',  (e: MouseEvent) => this.mouseDown = false);
+        this.canvas.addEventListener('mousemove',   (e: MouseEvent) => this.onMouseMove(e));
+        this.canvas.addEventListener('click',       (e: MouseEvent) => this.onClick(e));
+        this.canvas.addEventListener('contextmenu', (e: MouseEvent) => this.onContextMenu(e));
     }
 }
