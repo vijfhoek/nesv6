@@ -35,6 +35,12 @@ export default class {
 
     onMouseMoveColor(event: MouseEvent) {
         this.hoverPos = this.vue.getMousePos(this.canvas, event, 32);
+
+        if (this.mouseDown && this.vue.selectedColor >= 0) {
+            this.vue.attributes[this.hoverPos.y][this.hoverPos.x] = this.vue.selectedColor;
+            this.vue.serialize();
+        }
+
         this.draw();
 
         this.context.strokeStyle = '#fff';
@@ -76,10 +82,11 @@ export default class {
 
     onClick(event: MouseEvent) {
         const pos = this.vue.getMousePos(this.canvas, event, 16);
-        if (this.vue.selectedSprite < 0)
-            return;
+        if (this.vue.selectedSprite >= 0)
+            this.vue.level[pos.y][pos.x] = this.vue.selectedSprite;
+        else if (this.vue.selectedColor >= 0)
+            this.vue.attributes[pos.y >> 1][pos.x >> 1] = this.vue.selectedColor;
 
-        this.vue.level[pos.y][pos.x] = this.vue.selectedSprite;
         this.vue.serialize();
         this.draw();
     }
