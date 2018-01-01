@@ -2,6 +2,7 @@
 #include "map_data.h"
 #include "map.h"
 #include "controller.h"
+#include "stars.h"
 
 #define PPU_CTRL    (uint8_t *)0x2000
 #define PPU_MASK    (uint8_t *)0x2001
@@ -147,6 +148,9 @@ void initialize(void)
     SET_PALETTE(0x14, 0x0F, 0x00, 0x10, 0x30);
     SET_PPU_ADDRESS(0x0000);
 
+    // Initialize the stars
+    init_stars();
+
     *PPU_CTRL = 0x90;
     wait_vblank();
 
@@ -166,6 +170,7 @@ void main(void)
     while (1) {
         count += 1;
         update_player(read_controller());
+        update_stars();
 
         if (reload_map) {
             const uint8_t *map = MAPS[map_y][map_x];
