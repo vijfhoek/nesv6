@@ -30,9 +30,9 @@ _init_stars:
             jsr _rand
             cmp #216
             bcs @y_loop  ; regenerate if y >= 216
-            sta $20f, y
-            dey
 
+        sta $20f, y
+        dey
         bne @loop
     rts
 
