@@ -20,9 +20,8 @@
                 <div class="palette">
                     <div v-for="(color, i) in palettes" :data-color="color"
                          :data-selected="selectedColor == i >> 2 ? '' : null"
-                         v-on:click="selectColor(i >> 2)"
-                         v-on:contextmenu="showColorPicker($event, color, i)"
-                         class="palette__color">
+                         class="palette__color" v-on:click="selectColor(i >> 2)"
+                         v-on:contextmenu="showColorPicker($event, color, i)">
                         {{ toHex(color) }}
                     </div>
                     <span class="palette__add" v-if="palettes.length < 16"
@@ -36,6 +35,12 @@
                             {{ toHex(color - 1) }}
                         </div>
                     </div>
+                </div>
+
+                <h2>Special</h2>
+                <div class="special">
+                    <div class="special__collision" v-on:click="selectSpecial('collision')"
+                         :data-selected="selectedSpecial == 'collision'">C</div>
                 </div>
             </div>
 

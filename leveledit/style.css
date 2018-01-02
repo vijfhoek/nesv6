@@ -66,6 +66,20 @@ table {
     border-right: 2px #c07 solid;
 }
 
+.special > div {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #777;
+    cursor: pointer;
+
+    line-height: 32px;
+    text-align: center;
+}
+
+.special > div[data-selected] {
+    border: 2px #c07 solid;
+}
+
 .color-picker {
     background-color: white;
 

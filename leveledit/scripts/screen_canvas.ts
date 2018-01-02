@@ -3,8 +3,10 @@ export default class {
     context: CanvasRenderingContext2D;
     vue: any;
 
-    mouseDown: boolean                  = false;
-    hoverPos:  { x: number, y: number } = { x: 0, y: 0 };
+    mouseDown: boolean = false;
+
+    clickCollision: boolean = false;
+    hoverPos: { x: number, y: number } = { x: 0, y: 0 };
 
     draw() {
         const image   = this.context.createImageData(512, 480);
@@ -31,6 +33,16 @@ export default class {
         }
 
         this.context.putImageData(image, 0, 0);
+
+        if (this.vue.selectedSpecial == 'collision') {
+            this.context.fillStyle = 'rgba(255, 255, 255, 0.4)'
+            for (let y = 0; y < 30; y++) {
+                for (let x = 0; x < 32; x++) {
+                    if (this.vue.collision[y][x])
+                        this.context.fillRect(x * 16, y * 16, 16, 16);
+                }
+            }
+        }
     }
 
     onMouseMoveColor(event: MouseEvent) {
@@ -62,8 +74,12 @@ export default class {
     onMouseMoveSprite(event: MouseEvent) {
         this.hoverPos = this.vue.getMousePos(this.canvas, event, 16);
 
-        if (this.mouseDown && this.vue.selectedSprite >= 0) {
-            this.vue.level[this.hoverPos.y][this.hoverPos.x] = this.vue.selectedSprite;
+        if (this.mouseDown) {
+            if (this.vue.selectedSprite >= 0)
+                this.vue.level[this.hoverPos.y][this.hoverPos.x] = this.vue.selectedSprite;
+            else if (this.vue.selectedSpecial == 'collision')
+                this.vue.collision[this.hoverPos.y][this.hoverPos.x] = !this.clickCollision
+
             this.vue.serialize();
         }
 
@@ -86,6 +102,8 @@ export default class {
             this.vue.level[pos.y][pos.x] = this.vue.selectedSprite;
         else if (this.vue.selectedColor >= 0)
             this.vue.attributes[pos.y >> 1][pos.x >> 1] = this.vue.selectedColor;
+        else if (this.vue.selectedSpecial == 'collision')
+            this.vue.collision[pos.y][pos.x] = !this.clickCollision
 
         this.vue.serialize();
         this.draw();
@@ -125,6 +143,13 @@ export default class {
         this.draw();
     }
 
+    onMouseDown(event: MouseEvent) {
+        this.mouseDown = true;
+
+        const pos = this.vue.getMousePos(this.canvas, event, 16);
+        this.clickCollision = this.vue.collision[pos.y][pos.x];
+    }
+
     constructor(vue: any) {
         this.vue = vue;
         this.canvas = document.querySelector('.screen-canvas') as HTMLCanvasElement;
@@ -134,7 +159,7 @@ export default class {
             throw 'Could not get 2D context';
         this.context = context;
 
-        this.canvas.addEventListener('mousedown',   (e: MouseEvent) => this.mouseDown = true);
+        this.canvas.addEventListener('mousedown',   (e: MouseEvent) => this.onMouseDown(e));
         this.canvas.addEventListener('mouseup',     (e: MouseEvent) => this.mouseDown = false);
         this.canvas.addEventListener('mouseleave',  (e: MouseEvent) => this.mouseDown = false);
         this.canvas.addEventListener('mousemove',   (e: MouseEvent) => this.onMouseMove(e));

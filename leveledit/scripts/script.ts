@@ -10,16 +10,16 @@ let colors = require('./palette').colors;
 class AppData {
     level:      number[][];
     attributes: number[][];
-
     sprites:  number[][];
     palettes: number[];
-    attr:     number[];
+    collision: boolean[][];
 
-    colors:         number[];
-    selectedColor:  number;
-    selectedSprite: number;
-    hoverPos:       { x: number, y: number };
-    mouseDown:      boolean;
+    colors:          number[];
+    selectedColor:   number;
+    selectedSprite:  number;
+    selectedSpecial: string | null;
+    hoverPos:        { x: number, y: number };
+    mouseDown:       boolean;
 
     cArray: string;
     size:   number;
@@ -32,16 +32,16 @@ class AppData {
 var data: AppData = {
     level:      [],
     attributes: [],
+    sprites:    [],
+    palettes:   [],
+    collision:  [],
 
-    sprites:  [],
-    palettes: [0x0d, 0x00, 0x10, 0x20],
-    attr:     Array(64).fill(0),
-
-    colors:         colors,
-    selectedColor:  -1,
-    selectedSprite: -1,
-    hoverPos:       { x: -1, y: -1 },
-    mouseDown:      false,
+    colors:          colors,
+    selectedColor:   -1,
+    selectedSprite:  -1,
+    selectedSpecial: null,
+    hoverPos:        { x: -1, y: -1 },
+    mouseDown:       false,
 
     cArray: "",
     size:   0,
@@ -61,10 +61,11 @@ const vue = new Vue({
         deserialize: deserialize,
         clearLevel:  clearLevel,
 
-        drawPixel:    drawPixel,
-        drawSprite:   drawSprite,
-        selectSprite: selectSprite,
-        selectColor:  selectColor,
+        drawPixel:     drawPixel,
+        drawSprite:    drawSprite,
+        selectSprite:  selectSprite,
+        selectColor:   selectColor,
+        selectSpecial: selectSpecial,
 
         showColorPicker: showColorPicker,
         onColorPicked:   onColorPicked,
@@ -76,11 +77,13 @@ const vue = new Vue({
         let sprites    = localStorage.getItem('sprites');
         let palettes   = localStorage.getItem('palettes');
         let attributes = localStorage.getItem('attributes');
+        let collision  = localStorage.getItem('collision');
 
         this.level      = levelJson  ? JSON.parse(levelJson)  : createEmpty();
         this.sprites    = sprites    ? JSON.parse(sprites)    : [];
         this.palettes   = palettes   ? JSON.parse(palettes)   : [];
         this.attributes = attributes ? JSON.parse(attributes) : [];
+        this.collision  = collision  ? JSON.parse(collision)  : Array(30).fill(0).map(() => Array(32).fill(false));
     },
     mounted: function() {
         this.chrLoader = new ChrLoader(this);
@@ -99,15 +102,27 @@ function toHex(i: number) {
 }
 
 function selectColor(color: number) {
-    this.selectedSprite = -1;
-    this.selectedColor  = color;
+    this.selectedSprite  = -1;
+    this.selectedColor   = color;
+    this.selectedSpecial = null;
     this.spriteCanvas.draw();
+    this.screenCanvas.draw();
 }
 
 function selectSprite(spriteId: number) {
-    this.selectedSprite = spriteId;
-    this.selectedColor = -1;
+    this.selectedSprite  = spriteId;
+    this.selectedColor   = -1;
+    this.selectedSpecial = null;
     this.spriteCanvas.draw();
+    this.screenCanvas.draw();
+}
+
+function selectSpecial(special: string) {
+    this.selectedSprite  = -1;
+    this.selectedColor   = -1;
+    this.selectedSpecial = special;
+    this.spriteCanvas.draw();
+    this.screenCanvas.draw();
 }
 
 function showColorPicker(ev: MouseEvent, color: number, index: number) {
@@ -211,6 +226,15 @@ function serialize() {
     }
     result.push(0);
 
+    // Add the collision bitmap
+    let flatBits: boolean[] = [].concat(...this.collision);
+    for (let i = 0; i < flatBits.length; i += 8) {
+        let byte = 0;
+        for (let j = 0; j < 8; j++)
+            byte |= flatBits[i + j] ? (0x80 >> j) : 0;
+        result.push(byte);
+    }
+
     // Convert the array to C syntax
     this.cArray = '';
     this.size = result.length;
@@ -246,6 +270,20 @@ function deserialize() {
             }
         }
     }
+
+    // Add the collision bitmap
+    console.log(numbers);
+    this.collision = []
+    for (let y = 0; y < 30; y++) {
+        let row: boolean[] = []
+        for (let x = 0; x < 32; x += 8) {
+            const byte = numbers[(y * 32 + x) >> 3];
+            for (let j = 0; j < 8; j++)
+                row.push((byte & (0x80 >> j)) > 0);
+        }
+        this.collision.push(row);
+    }
+    console.log(this.collision);
 
     // Unravel the attributes
     let attrs = flat.splice(30 * 32);
