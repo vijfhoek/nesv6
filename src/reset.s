@@ -70,7 +70,7 @@ start:
     lda $2002            ;reset the 'latch'
     jmp _main            ;jumps to main in c code
 
-
+.segment "CODE"
 nmi:
     lda #$02
     sta $4014
@@ -92,6 +92,7 @@ _wait_vblank:
     sta _nmi_occurred
 
     rts
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;             RODATA               ;;;

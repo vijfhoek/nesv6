@@ -1,8 +1,9 @@
 .include "zeropage.inc"
 .include "util.inc"
 
-.import _wait_vblank
+.import _collision_map
 
+.import _wait_vblank
 
 ;;; _load_map loads a map into the PPU memory
 ;;; Cycles: 
@@ -47,7 +48,7 @@ _load_map:
 
         ;; Exit when the block length is 0
         lda (ptr1), y
-        beq @reset_ppu_regs
+        beq @block_loop_end
 
         sta ptr2
         iny
@@ -71,6 +72,14 @@ _load_map:
             bne @data_loop
 
         jmp @block_loop
+    @block_loop_end:
+
+    ldy #120
+    @collision_map_loop:
+        lda (ptr1), y
+        sta _collision_map-1, y
+        dey
+        bne @collision_map_loop
 
 @reset_ppu_regs:
     lda #$00
