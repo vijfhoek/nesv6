@@ -19,7 +19,7 @@ _load_map:
     stm PPUMASK, #$06
 
     ;; Point the PPU to the palette
-    setppuaddress $3f00
+    setppuaddr $3f00
 
     ;; Copy the palette to the PPU
     ldy #$00
@@ -38,7 +38,7 @@ _load_map:
     iny
 
     ;; Point the PPU to nametable 0
-    setppuaddress $2000
+    setppuaddr $2000
 
     @block_loop:
         ;; Add Y to the pointer to prevent an overflow
@@ -95,4 +95,3 @@ _load_map:
     stm PPUMASK, #$1e
 
     rts
-udevadm info /sys/class/net
