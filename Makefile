@@ -17,16 +17,19 @@ ASOBJECTS := $(ASSOURCES:src/%.s=obj/%.o)
 
 $(TARGET): $(COBJECTS) $(ASOBJECTS)
 	@echo -e "\033[32mLinking\033[0m"
-	$(LD) $(LDFLAGS) $(COBJECTS) $(ASOBJECTS) $(CC65_HOME)/lib/nes.lib -o $@
+	$(LD) $(LDFLAGS) \
+		$(COBJECTS) \
+		$(ASOBJECTS) \
+		$$CC65_HOME/lib/nes.lib -o $@
 
 
-$(ASOBJECTS): obj/%.o : src/%.s
+$(ASOBJECTS): obj/%.o:src/%.s
 	@echo -e "\033[32mAssembling $<\033[0m"
 	@mkdir -p $(OBJDIR)
 	$(AS) $(ASFLAGS) $< -o $@
 
 
-$(COBJECTS): obj/%.o : src/%.c
+$(COBJECTS): obj/%.o:src/%.c
 	@echo -e "\033[32mCompiling $<\033[0m"
 	@mkdir -p $(OBJDIR)
 	$(CC) $(CFLAGS) $< -o $(@:%.o=%.s)
