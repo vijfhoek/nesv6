@@ -28,7 +28,7 @@
     sta addr
 .endmacro
 
-.macro stppuaddr val
+.macro setppuaddr val
     stm PPUADDR, #>(val)
     stm PPUADDR, #<(val)
 .endmacro

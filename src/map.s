@@ -6,7 +6,7 @@
 .import _wait_vblank
 
 ;;; _load_map loads a map into the PPU memory
-;;; Cycles: 
+;;; Cycles:
 ;;;
 ;;; Parameters:
 ;;;  AX: The address of the map data
@@ -19,7 +19,7 @@ _load_map:
     stm PPUMASK, #$06
 
     ;; Point the PPU to the palette
-    stppuaddr $3f00
+    setppuaddress $3f00
 
     ;; Copy the palette to the PPU
     ldy #$00
@@ -38,7 +38,7 @@ _load_map:
     iny
 
     ;; Point the PPU to nametable 0
-    stppuaddr $2000
+    setppuaddress $2000
 
     @block_loop:
         ;; Add Y to the pointer to prevent an overflow
@@ -55,17 +55,17 @@ _load_map:
 
         @data_loop:
             lda (ptr1), y
-            iny               
+            iny
             tax
-                            
-            lda (ptr1), y       
-            iny        
-                
+
+            lda (ptr1), y
+            iny
+
             ;; Store the value to PPUDATA x times
             @data_inner_loop:
-                sta PPUDATA         
-                dex                  
-                bne @data_inner_loop 
+                sta PPUDATA
+                dex
+                bne @data_inner_loop
 
             dec ptr2
             dec ptr2
@@ -95,3 +95,4 @@ _load_map:
     stm PPUMASK, #$1e
 
     rts
+udevadm info /sys/class/net
